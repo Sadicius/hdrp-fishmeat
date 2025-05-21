@@ -7,6 +7,7 @@ lib.locale()
 ------------------------------------------------------------------------------------------------------
 -- block player
 local function FreezePlayer()
+    LocalPlayer.state:set("inv_busy", true, true) -- lock inventory
     FreezeEntityPosition(cache.ped, true)
     SetEntityInvincible(cache.ped, true)
     SetCurrentPedWeapon(cache.ped, "WEAPON_UNARMED", true)
@@ -20,6 +21,7 @@ local function UnfreezePlayer()
     SetCurrentPedWeapon(cache.ped, "WEAPON_UNARMED", false)
     SetBlockingOfNonTemporaryEvents(cache.ped, false)
     SetPedCanRagdoll(cache.ped, true)
+    LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory 
 end
 
 local function cleanProps(prop)
@@ -31,6 +33,7 @@ local function cleanProps(prop)
                 SetEntityAsNoLongerNeeded(prop)
                 DeleteEntity(prop)
                 props[key] = nil
+                break
             end
         end
     end
@@ -55,12 +58,14 @@ end
 
 local function breakRequerimentItem(knife)
     local numberGenerator = math.random(1, 100)
+    if Config.Debug then print('break tool', numberGenerator, '<= '.. Config.randomBreakKnife) end
     if numberGenerator <= Config.randomBreakKnife then
         if knife and DoesEntityExist(knife) then cleanProps(knife) end
         UnfreezePlayer()
         LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory 
         TriggerServerEvent('hdrp-fistmeat:server:breakknife')
         lib.notify({ title = locale('cl_lang_3'), description = locale('cl_lang_4'), type = 'error' })
+        return
     end
 end
 
@@ -73,7 +78,6 @@ RegisterNetEvent('hdrp-fishmeat:client:processfish', function()
     local hasItem = RSGCore.Functions.HasItem(Config.requerimentFishing, 1)
     if not hasItem then lib.notify({ title = locale('cl_lang_1'), description = locale('cl_lang_2'), type = 'error' }) return end
 
-    LocalPlayer.state:set("inv_busy", true, true) -- lock inventory
     FreezePlayer()
 
     local time = Config.SellTime
@@ -89,79 +93,88 @@ RegisterNetEvent('hdrp-fishmeat:client:processfish', function()
             flag = 1
         },
         prop = {
-            -- first
             {
-                model = `w_melee_knife06`,
-                bone = GetEntityBoneIndexByName(cache.ped, "SKEL_R_Finger00"),
-                pos = vector3(0.07, -0.00, 0.02),
-                rot = vector3(75.0, 270.0, 120.0)
+                model = Config.propKnife,
+                bone = 16827,
+                pos = { x = 0.07, y = 0.00, z = 0.02 },
+                rot = { x = 75.0, y = 270.0, z = 120.0 }
             },
             {
-                model = `p_redfishfilet01xa`,
-                bone = GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00"),
-                pos = vector3(0.27, -0.00, -0.04),
-                rot = vector3(-80.0, 90.0, 30.0)
+                model = Config.propFish,
+                bone = 41403,
+                pos = { x = 0.27, y = 0.00, z = -0.04 },
+                rot = { x = -80.0, y = 90.0, z = 30.0 }
             },
         },
         disable = {
             move = true,
-            mouse = true,
         },
-        label = locale('cl_lang_5'), -- 'Preparing '..title..' '..category
+        label = locale('cl_lang_5'),
     }) then
         if Config.Debug then print('check first progress') end
-        if Config.breakKnife then breakRequerimentItem(nil) return end         -- break requeriment item
+        if Config.breakKnife then breakRequerimentItem(nil) end
+
+        local hasItemB = RSGCore.Functions.HasItem(Config.requerimentFishing, 1)
+        if not hasItemB then lib.notify({ title = locale('cl_lang_1'), description = locale('cl_lang_2'), type = 'error' }) return end
         if Config.DoMiniGame then
-            local success = lib.skillCheck({{areaSize = 50, speedMultiplier = 0.5}}, Config.DoMiniGameKeys)
+            if Config.Debug then print('DoMiniGame') end
+            local success = lib.skillCheck({Config.levelSkillGameFirst, Config.levelSkillGameSecond, {areaSize = 60, speedMultiplier = 2}, Config.levelSkillGameThree}, Config.skillPressKeys)
             if not success then
+                if Config.Debug then print('DoMiniGame Fail') end
+                if Config.breakIngredient then
+                    local numberGenerator = math.random(1, 100)
+                    if Config.Debug then print('break Ing', numberGenerator, '<= '.. Config.randomBreakIng) end
+                    if numberGenerator <= Config.randomBreakIng then
+                        TriggerServerEvent('hdrp-fistmeat:server:processfailfish')
+                    end
+                end
                 UnfreezePlayer()
-                LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory
-                TriggerServerEvent('hdrp-fishmeat:server:processfailfish')
                 SetPedToRagdoll(cache.ped, 1000, 1000, 0, 0, 0, 0)
                 lib.notify({ title = locale('cl_lang_7'), description = locale('cl_lang_8'), type = 'error' })
                 return
             end
+
+        end
+
+        if Config.Debug then print('DoMiniGame Succes') end
+
+        if lib.progressBar({
+            duration = time*0.3,
+            position = 'bottom',
+            useWhileDead = false,
+            canCancel = false,
+            disableControl = true,
+            anim = {
+                dict = 'amb_rest_lean@world_human_lean@table@sharpen_knife@male_a@idle_a',
+                clip = 'idle_c',
+                flag = 1
+            },
+            prop = {
+                {
+                    model = Config.propKnife,
+                    bone = 16827, -- GetEntityBoneIndexByName(cache.ped, "SKEL_R_Finger00") or 16827
+                    pos = { x = 0.07, y = 0.00, z = 0.025 },
+                    rot = { x = 90.0, y = 165.0, z = 105.0 }
+                },
+                {
+                    model = Config.propFishfilet,
+                    bone =  41403, -- GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00") or 41403
+                    pos = { x = 0.10, y = 0.01, z = -0.03 },
+                    rot = { x = -30.0, y = 80.0, z = 90.0 }
+                }
+            },
+
+            disable = {
+                move = true,
+            },
+            label = locale('cl_lang_5'), -- 'Preparing '..title..' '..category
+        }) then
+            if Config.Debug then print('Succes processfish') end
+            TriggerServerEvent('hdrp-fistmeat:server:processfish')
         end
     end
 
-    if lib.progressBar({
-        duration = time*0.3,
-        position = 'bottom',
-        useWhileDead = false,
-        canCancel = false,
-        disableControl = true,
-        anim = {
-            dict = 'amb_rest_lean@world_human_lean@table@sharpen_knife@male_a@idle_a',
-            clip = 'idle_c',
-            flag = 1
-        },
-        prop = {
-            -- second
-            {
-                model = `w_melee_knife06`,
-                bone = GetEntityBoneIndexByName(cache.ped, "SKEL_R_Finger00"),
-                pos = vector3(0.07, -0.00, 0.025),
-                rot = vector3(90.0, 165.0, 105.0)
-            },
-            {
-                model = `p_redfishfilet01xa`,
-                bone = GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00"),
-                pos = vector3(0.10, 0.01, -0.03),
-                rot = vector3(-30.0, 80.0, 90.0)
-            }
-        },
-
-        disable = {
-            move = true,
-            mouse = true,
-        },
-        label = locale('cl_lang_5'), -- 'Preparing '..title..' '..category
-    }) then
-        TriggerServerEvent('hdrp-fishmeat:server:processfish')
-    end
-
     UnfreezePlayer()
-    LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory
 end)
 
 --------------
@@ -180,13 +193,15 @@ local function playProgressBar(duration, label)
             clip = 'idle_c',
             flag = 1
         },
-        disable = { move = true, mouse = true },
+        disable = { move = true },
         label = label
     })
 end
 
-RegisterNetEvent('hdrp-fishmeat:client:playerprocessfish', function()
-    LocalPlayer.state:set("inv_busy", true, true) -- lock inventory
+RegisterNetEvent('hdrp-fistmeat:client:playerprocessfish', function()
+    local hasItem = RSGCore.Functions.HasItem(Config.requerimentFishing, 1)
+    if not hasItem then lib.notify({ title = locale('cl_lang_1'), description = locale('cl_lang_2'), type = 'error' }) return end
+
     FreezePlayer()
     -- FIRST PART
     local knife = attachPropToBone(Config.propKnife, "SKEL_R_Finger00", vector3(0.07, 0.00, 0.02), vector3(75.0, 270.0, 120.0))
@@ -196,38 +211,48 @@ RegisterNetEvent('hdrp-fishmeat:client:playerprocessfish', function()
     local time = Config.SellTime
     if playProgressBar(time*0.7, locale('cl_lang_5')) then
         cleanProps(fish)
-        if Config.breakKnife then breakRequerimentItem(knife) return end         -- break requeriment item
+        if Config.Debug then print('check first progress') end
+        if Config.breakKnife then breakRequerimentItem(knife) end         -- break requeriment item
+        local hasItemB = RSGCore.Functions.HasItem(Config.requerimentFishing, 1)
+        if not hasItemB then lib.notify({ title = locale('cl_lang_1'), description = locale('cl_lang_2'), type = 'error' }) return end
         if Config.DoMiniGame then
-            local success = lib.skillCheck({{areaSize = 50, speedMultiplier = 0.5}}, Config.DoMiniGameKeys)
+            if Config.Debug then print('DoMiniGame') end
+            local success = lib.skillCheck({Config.levelSkillGameFirst, Config.levelSkillGameSecond, {areaSize = 60, speedMultiplier = 2}, Config.levelSkillGameThree}, Config.skillPressKeys)
             if not success then
+                if Config.Debug then print('DoMiniGame Fail') end
                 cleanProps(knife)
+                if Config.breakIngredient then
+                    local numberGenerator = math.random(1, 100)
+                    if Config.Debug then print('break Ing', numberGenerator, '<= '.. Config.randomBreakIng) end
+                    if numberGenerator <= Config.randomBreakIng then
+                        TriggerServerEvent('hdrp-fistmeat:server:processfailfish')
+                    end
+                end
                 UnfreezePlayer()
-                LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory 
-                TriggerServerEvent('hdrp-fishmeat:server:processfailfish')
                 SetPedToRagdoll(cache.ped, 1000, 1000, 0, 0, 0, 0)
                 lib.notify({ title = locale('cl_lang_15'), description = locale('cl_lang_16'), type = 'error' })
                 return
             end
         end
+
+        if Config.Debug then print('DoMiniGame Succes') end
+        Wait(100)
+        -- SECOND PART
+        local filet = attachPropToBone(Config.propFishfilet, "SKEL_L_Finger00", vector3(0.10, 0.01, -0.03), vector3(-30.0, 80.0, 90.0))
+        if filet then table.insert(spawnProps, {filet = filet}) end
+        if knife and DoesEntityExist(knife) then
+            AttachEntityToEntity(knife, cache.ped, GetEntityBoneIndexByName(cache.ped, "SKEL_R_Finger00"), 0.07, 0.00, 0.025, 90.0, 165.0, 105.0, true, false, true, false, 0, true)
+        end
+        Wait(100)
+        if playProgressBar(time*0.3, locale('cl_lang_5')) then
+            cleanProps(knife)
+            cleanProps(filet)
+            if Config.Debug then print('Succes processfish') end
+            TriggerServerEvent('hdrp-fistmeat:server:processfish')
+        end
     end
-
-    -- SECOND PART
-    local filet = attachPropToBone(Config.propFishfilet, "SKEL_L_Finger00", vector3(0.10, 0.01, -0.03), vector3(-30.0, 80.0, 90.0))
-    if filet then table.insert(spawnProps, {filet = filet}) end
-
-    if knife and DoesEntityExist(knife) then
-        AttachEntityToEntity(knife, cache.ped, GetEntityBoneIndexByName(cache.ped, "SKEL_R_Finger00"), 0.07, 0.00, 0.025, 90.0, 165.0, 105.0, true, false, true, false, 0, true)
-    end
-
-    Wait(100)
-    if playProgressBar(time*0.3, locale('cl_lang_5')) then
-        cleanProps(knife)
-        cleanProps(filet)
-        TriggerServerEvent('hdrp-fishmeat:server:processfish')
-    end
-
+    -- CLEAN
     UnfreezePlayer()
-    LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory
 end)
 
 AddEventHandler('onResourceStop', function(resource)
@@ -243,5 +268,4 @@ AddEventHandler('onResourceStop', function(resource)
     end
     spawnProps = {}
     UnfreezePlayer()
-    LocalPlayer.state:set("inv_busy", false, true)
 end)

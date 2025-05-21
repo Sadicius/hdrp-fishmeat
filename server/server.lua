@@ -8,23 +8,38 @@ RSGCore.Commands.Add(Config.commandProcessFish, locale('sv_lang_10'), {}, false,
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    TriggerClientEvent('hdrp-fistmeat:client:playerprocessfish', src)
+    local hasFish = false
+    if Player.PlayerData.items ~= nil then
+        for _, item in pairs(Player.PlayerData.items) do
+            if item and item.name and string.match(item.name, "^a_c_fish") then
+                hasFish = true
+                break
+            end
+        end
+    end
+
+    if hasFish then
+        TriggerClientEvent('hdrp-fistmeat:client:playerprocessfish', src)
+    else
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = locale('sv_lang_6'),
+            description = locale('sv_lang_7'), -- Mensaje como "No tienes peces"
+            type = 'error'
+        })
+    end
 end, 'user')
 
 ----------------------------------------------------
 -- break items
 ----------------------------------------------------
 RegisterServerEvent('hdrp-fistmeat:server:breakknife')
-AddEventHandler('hdrp-fistmeat:server:breakknife', function(item)
+AddEventHandler('hdrp-fistmeat:server:breakknife', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    if item == Config.requerimentFishing then
-        Player.Functions.RemoveItem(Config.requerimentFishing, 1)
-        TriggerClientEvent("inventory:client:ItemBox", src, RSGCore.Shared.Items[Config.requerimentFishing], "add")
-
+    if Player.Functions.RemoveItem(Config.requerimentFishing, 1) then
+        TriggerClientEvent("rsg-inventory:client:ItemBox", src, RSGCore.Shared.Items[Config.requerimentFishing], "add")
         TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lang_1'), description = locale('sv_lang_2'), type = 'success' })
-
     else
         TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lang_3'), description = locale('sv_lang_4'), type = 'error' })
         if Config.Debug then  print(locale('sv_lang_5')) end
