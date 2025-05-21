@@ -1,0 +1,30 @@
+{
+"sv_lang_1" : "Success", 
+"sv_lang_2" : "your knife broke", 
+"sv_lang_3" : "Error", 
+"sv_lang_4" : "something went wrong", 
+"sv_lang_5" : "something went wrong with the script could be exploited!", 
+"sv_lang_6" : "No Fish!", 
+"sv_lang_7" : "you don't have any fish to process", 
+"sv_lang_8" : "Success", 
+"sv_lang_9" : "You don't prepared correctly", 
+"sv_lang_10" : "Player Process Fish", 
+
+"cl_lang_1" : "Error", 
+"cl_lang_2": "You don't have a knife!", 
+"cl_lang_3" : "Break knife!", 
+"cl_lang_4" : "It was already old, you need a new one", 
+"cl_lang_5" : "Preparing", 
+"cl_lang_6" : "check first progress", 
+"cl_lang_7" : "Try again!", 
+"cl_lang_8" : "Have you never used a knife?", 
+"cl_lang_9" : "Error creating knife", 
+"cl_lang_10" : "The object could not be created", 
+"cl_lang_11" : "Error creating fish", 
+"cl_lang_12" : "The object could not be created", 
+"cl_lang_13" : "Error creating fishfilet", 
+"cl_lang_14" : "The object could not be created", 
+"cl_lang_15" : "Try again!", 
+"cl_lang_16": "Have you never used a knife?"
+
+}
