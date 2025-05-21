@@ -1,7 +1,8 @@
 # FISH PREPARED System
 
 # Video
-- https://www.youtube.com/watch?v=LOEsIY-aqQ0
+- https://www.youtube.com/watch?v=LOEsIY-aqQ0 -- old
+- https://youtu.be/p-awGn5rSTI -- new
 
 - command processfish
 - call to 'hdrp-fistmeat:server:accessprocess'
