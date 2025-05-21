@@ -1,11 +1,7 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 lib.locale()
 
-----------------------------------------------
--- command process fish for raw_fish
-----------------------------------------------
-RSGCore.Commands.Add(Config.commandProcessFish, locale('sv_lang_10'), {}, false, function(source)
-    local src = source
+local function accessProcess(src)
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
     local hasFish = false
@@ -19,7 +15,7 @@ RSGCore.Commands.Add(Config.commandProcessFish, locale('sv_lang_10'), {}, false,
     end
 
     if hasFish then
-        TriggerClientEvent('hdrp-fistmeat:client:playerprocessfish', src)
+        TriggerClientEvent('hdrp-fistmeat:client:processfish', src)
     else
         TriggerClientEvent('ox_lib:notify', src, {
             title = locale('sv_lang_6'),
@@ -27,6 +23,13 @@ RSGCore.Commands.Add(Config.commandProcessFish, locale('sv_lang_10'), {}, false,
             type = 'error'
         })
     end
+end
+----------------------------------------------
+-- command process fish for raw_fish
+----------------------------------------------
+RSGCore.Commands.Add(Config.commandProcessFish, locale('sv_lang_10'), {}, false, function(source)
+    local src = source
+    accessProcess(src)
 end, 'user')
 
 ----------------------------------------------------
@@ -44,6 +47,15 @@ AddEventHandler('hdrp-fistmeat:server:breakknife', function()
         TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lang_3'), description = locale('sv_lang_4'), type = 'error' })
         if Config.Debug then  print(locale('sv_lang_5')) end
     end
+end)
+
+----------------------------------------------------
+-- break items
+----------------------------------------------------
+RegisterServerEvent('hdrp-fistmeat:server:accessprocess')
+AddEventHandler('hdrp-fistmeat:server:accessprocess', function()
+    local src = source
+    accessProcess(src)
 end)
 
 ----------------------------------------------------

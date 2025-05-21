@@ -10,11 +10,11 @@ Config.commandProcessFish = 'processfish'
 Config.requerimentFishing = 'weapon_melee_knife' -- 'weapon_melee_knife_jawbone' -- tools require
 
 -- mini game
-Config.DoMiniGame = true
+Config.DoMiniGame = false
 Config.levelSkillGameFirst = 'easy'
 Config.levelSkillGameSecond = 'easy'
 Config.levelSkillGameThree = 'easy' -- 'easy, 'medium', 'hard'
-Config.skillPressKeys = {'e'}-- {'w', 'a', 's', 'd'}
+Config.skillPressKeys = {'e'} -- {'w', 'a', 's', 'd'}
 Config.breakIngredient = true -- if necesary DoMiniGame in true 
 Config.randomBreakIng = 25 -- 1-100%
 
