@@ -3,6 +3,9 @@
 # Video
 - https://www.youtube.com/watch?v=LOEsIY-aqQ0
 
+- command processfish
+- call to 'hdrp-fistmeat:server:accessprocess'
+
 # Dependancies
 - rsg-core
 - ox_lib
@@ -14,7 +17,7 @@
 - add images to your "\rsg-inventory\html\images"
 
 # Starting the resource
-- add the following to your server.cfg file : ensure rsg-fishprep
+- add the following to your server.cfg file : ensure hdrp-fishmeat
 
 # Credits
 - Sadicius / Sadicius#1150 / https://linktr.ee/sadicius
